@@ -38,7 +38,7 @@
     @keyframes pulse-ring { 0% { transform: scale(0.33); } 80%, 100% { opacity: 0; transform: scale(1.2); } }
     .pulse-ring { animation: pulse-ring 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite; }
   </style>
-</head>
+  </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen">
   <!-- Hero Header -->
   <header class="gradient-bg text-white">
@@ -61,7 +61,7 @@
           <button id="profileBtn" class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center hover:bg-white/30 transition-colors">
             <span class="text-lg">👤</span>
           </button>
-        </div>
+    </div>
       </div>
 
       <!-- Search Bar -->
@@ -80,8 +80,15 @@
         </button>
       </div>
 
+      <!-- Main Action Button -->
+      <div class="mt-6">
+        <button onclick="sellDialog.showModal()" class="w-full bg-white text-blue-600 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl">
+          🛍️ Sell Something
+        </button>
+      </div>
+
       <!-- Quick Stats -->
-      <div class="grid grid-cols-3 gap-4 text-center text-sm">
+      <div class="grid grid-cols-3 gap-4 text-center text-sm mt-6">
         <div class="bg-white/10 rounded-xl py-3">
           <div class="font-semibold" id="activeListings">2.5k+</div>
           <div class="text-white/80">Active Items</div>
@@ -93,7 +100,7 @@
         <div class="bg-white/10 rounded-xl py-3">
           <div class="font-semibold">⭐ 4.9</div>
           <div class="text-white/80">Rating</div>
-        </div>
+      </div>
       </div>
     </div>
   </header>
@@ -297,6 +304,15 @@
     </div>
   </main>
 
+  <!-- Floating Action Button -->
+  <div class="fixed bottom-6 right-6 z-50">
+    <button onclick="sellDialog.showModal()" class="bg-blue-600 text-white p-4 rounded-full shadow-2xl hover:bg-blue-700 transition-all hover:scale-110">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+      </svg>
+    </button>
+  </div>
+
   <!-- Authentication Dialog -->
   <dialog id="authDialog" class="max-w-md w-full p-0 rounded-3xl border-0 shadow-2xl backdrop:bg-black/50">
     <div class="bg-white rounded-3xl overflow-hidden">
@@ -481,8 +497,8 @@
           <button type="submit" class="flex-1 px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-medium rounded-xl hover:shadow-lg transition-all">
             🚀 List Item
           </button>
-        </div>
-      </form>
+      </div>
+    </form>
     </div>
   </dialog>
 

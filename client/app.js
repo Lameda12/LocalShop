@@ -704,13 +704,13 @@ sellForm.addEventListener('submit', async (e) => {
       body: form 
     });
     
-    if (res.ok) {
-      sellForm.reset();
-      sellDialog.close();
+  if (res.ok) {
+    sellForm.reset();
+    sellDialog.close();
       showToast('✅ Item posted successfully!', 'success');
-      fetchListings(true);
-    } else {
-      const err = await res.json().catch(() => ({}));
+    fetchListings(true);
+  } else {
+    const err = await res.json().catch(() => ({}));
       if (err.message && err.message.includes('token')) {
         clearAuth();
         showToast('Session expired. Please login again.', 'warning');
@@ -745,14 +745,20 @@ function clearAuth() {
 }
 
 function updateAuthUI() {
-  const sellBtn = document.querySelector('button[onclick="sellDialog.showModal()"]');
-  if (currentUser) {
-    // User is logged in
-    if (sellBtn) sellBtn.textContent = `🛍️ Sell Something`;
-  } else {
-    // User not logged in
-    if (sellBtn) sellBtn.textContent = `🔐 Login to Sell`;
-  }
+  const sellBtns = document.querySelectorAll('button[onclick="sellDialog.showModal()"]');
+  sellBtns.forEach(btn => {
+    if (currentUser) {
+      // User is logged in
+      btn.innerHTML = `🛍️ Sell Something`;
+      btn.classList.remove('bg-red-600', 'hover:bg-red-700');
+      btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+    } else {
+      // User not logged in  
+      btn.innerHTML = `🔐 Login to Sell`;
+      btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+      btn.classList.add('bg-red-600', 'hover:bg-red-700');
+    }
+  });
 }
 
 async function login(email, password) {
@@ -898,16 +904,18 @@ signupForm.addEventListener('submit', async (e) => {
 
 
 
-// Sell button click handler - requires authentication
-document.querySelector('button[onclick="sellDialog.showModal()"]')?.addEventListener('click', (e) => {
-  e.preventDefault(); // Prevent the onclick from firing
-  
-  if (!authToken || !currentUser) {
-    authDialog.showModal();
-    showToast('Please log in to sell items', 'info');
-  } else {
-    sellDialog.showModal();
-  }
+// Sell button click handlers - requires authentication
+document.querySelectorAll('button[onclick="sellDialog.showModal()"]').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.preventDefault(); // Prevent the onclick from firing
+    
+    if (!authToken || !currentUser) {
+      authDialog.showModal();
+      showToast('Please log in to sell items', 'info');
+    } else {
+      sellDialog.showModal();
+    }
+  });
 });
 
 // Initialize authentication UI

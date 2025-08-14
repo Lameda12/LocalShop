@@ -4,6 +4,12 @@ import User from '../models/User.js';
 
 export async function createListing(req, res, next) {
   try {
+    // Get authenticated user
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
     const { 
       title, 
       description, 
@@ -13,9 +19,6 @@ export async function createListing(req, res, next) {
       condition,
       city, 
       region, 
-      sellerName, 
-      sellerPhone, 
-      sellerEmail,
       messagingLink,
       negotiable,
       features,
@@ -43,11 +46,11 @@ export async function createListing(req, res, next) {
       },
       images,
       seller: { 
-        name: sellerName?.trim(), 
-        phone: sellerPhone?.trim(), 
-        email: sellerEmail?.trim(),
-        messagingLink: messagingLink?.trim(),
-        verified: false, // Default to false, can be updated later
+        name: user.name, 
+        phone: user.phone, 
+        email: user.email,
+        messagingLink: messagingLink?.trim() || user.messagingLink,
+        verified: user.verified,
         rating: 5, // Default rating
         reviewCount: 0,
         responseTime: 'Usually responds within a day'

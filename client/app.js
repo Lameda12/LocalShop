@@ -7,8 +7,8 @@ const API_BASE = (() => {
     return 'http://localhost:4000';
   }
   
-  // For production, use the same origin (Railway will serve both frontend and backend)
-  return window.location.origin;
+  // FIXED: Use the actual Railway backend URL
+  return 'https://localshop-production-2285.up.railway.app';
 })();
 
 // DOM Elements
@@ -41,6 +41,11 @@ let viewMode = 'grid';
 let userLocation = null;
 let favorites = JSON.parse(localStorage.getItem('localshop_favorites') || '[]');
 let searchHistory = JSON.parse(localStorage.getItem('localshop_search_history') || '[]');
+
+// Authentication State
+let currentUser = JSON.parse(localStorage.getItem('localshop_user') || 'null');
+let authToken = localStorage.getItem('localshop_token');
+let pendingEmail = null;
 
 let cursor = null;
 let fetching = false;
@@ -674,17 +679,286 @@ closeSell.addEventListener('click', () => sellDialog.close());
 
 sellForm.addEventListener('submit', async (e) => {
   e.preventDefault();
+  
+  // Check if user is logged in
+  if (!authToken || !currentUser) {
+    showToast('Please log in to sell items', 'warning');
+    authDialog.showModal();
+    return;
+  }
+  
   const form = new FormData(sellForm);
-  const res = await fetch(`${API_BASE}/api/listings`, { method: 'POST', body: form });
+  const res = await fetch(`${API_BASE}/api/listings`, { 
+    method: 'POST', 
+    headers: {
+      'Authorization': `Bearer ${authToken}`
+    },
+    body: form 
+  });
+  
   if (res.ok) {
     sellForm.reset();
     sellDialog.close();
+    showToast('Item posted successfully!', 'success');
     fetchListings(true);
   } else {
     const err = await res.json().catch(() => ({}));
-    alert(err.message || 'Failed to post');
+    showToast(err.message || 'Failed to post item', 'error');
   }
 });
+
+// Authentication Functions
+function saveAuth(token, user) {
+  authToken = token;
+  currentUser = user;
+  localStorage.setItem('localshop_token', token);
+  localStorage.setItem('localshop_user', JSON.stringify(user));
+  updateAuthUI();
+}
+
+function clearAuth() {
+  authToken = null;
+  currentUser = null;
+  localStorage.removeItem('localshop_token');
+  localStorage.removeItem('localshop_user');
+  updateAuthUI();
+}
+
+function updateAuthUI() {
+  const sellBtn = document.querySelector('button[onclick="sellDialog.showModal()"]');
+  if (currentUser) {
+    // User is logged in
+    if (sellBtn) sellBtn.textContent = `🛍️ Sell Something`;
+  } else {
+    // User not logged in
+    if (sellBtn) sellBtn.textContent = `🔐 Login to Sell`;
+  }
+}
+
+async function login(email, password) {
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    
+    const data = await res.json();
+    
+    if (data.success) {
+      saveAuth(data.token, data.user);
+      authDialog.close();
+      showToast(`Welcome back, ${data.user.name}!`, 'success');
+      return true;
+    } else {
+      showToast(data.message || 'Login failed', 'error');
+      return false;
+    }
+  } catch (error) {
+    showToast('Network error. Please try again.', 'error');
+    return false;
+  }
+}
+
+async function signup(name, email, phone, password) {
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, phone, password })
+    });
+    
+    const data = await res.json();
+    
+    if (data.success) {
+      pendingEmail = email;
+      showVerificationForm();
+      showToast('Verification code sent! Check your email.', 'success');
+      return true;
+    } else {
+      showToast(data.message || 'Signup failed', 'error');
+      return false;
+    }
+  } catch (error) {
+    showToast('Network error. Please try again.', 'error');
+    return false;
+  }
+}
+
+async function verify(email, code) {
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code })
+    });
+    
+    const data = await res.json();
+    
+    if (data.success) {
+      saveAuth(data.token, data.user);
+      authDialog.close();
+      showToast(`Account created! Welcome, ${data.user.name}!`, 'success');
+      return true;
+    } else {
+      showToast(data.message || 'Verification failed', 'error');
+      return false;
+    }
+  } catch (error) {
+    showToast('Network error. Please try again.', 'error');
+    return false;
+  }
+}
+
+// Authentication UI Functions
+function showLoginForm() {
+  document.getElementById('loginForm').classList.remove('hidden');
+  document.getElementById('signupForm').classList.add('hidden');
+  document.getElementById('verificationForm').classList.add('hidden');
+  document.getElementById('authTitle').textContent = '🔐 Login';
+  document.getElementById('toggleAuth').textContent = "Don't have an account? Sign up free!";
+}
+
+function showSignupForm() {
+  document.getElementById('loginForm').classList.add('hidden');
+  document.getElementById('signupForm').classList.remove('hidden');
+  document.getElementById('verificationForm').classList.add('hidden');
+  document.getElementById('authTitle').textContent = '🚀 Join LocalShop';
+  document.getElementById('toggleAuth').textContent = "Already have an account? Login";
+}
+
+function showVerificationForm() {
+  document.getElementById('loginForm').classList.add('hidden');
+  document.getElementById('signupForm').classList.add('hidden');
+  document.getElementById('verificationForm').classList.remove('hidden');
+  document.getElementById('authTitle').textContent = '📧 Verify Email';
+}
+
+// Authentication Event Listeners
+const authDialog = document.getElementById('authDialog');
+const loginForm = document.getElementById('loginForm');
+const signupForm = document.getElementById('signupForm');
+const verificationForm = document.getElementById('verificationForm');
+const closeAuth = document.getElementById('closeAuth');
+const toggleAuth = document.getElementById('toggleAuth');
+const resendCode = document.getElementById('resendCode');
+
+closeAuth.addEventListener('click', () => authDialog.close());
+
+toggleAuth.addEventListener('click', () => {
+  if (document.getElementById('loginForm').classList.contains('hidden')) {
+    showLoginForm();
+  } else {
+    showSignupForm();
+  }
+});
+
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = new FormData(loginForm);
+  const email = form.get('email');
+  const password = form.get('password');
+  
+  const button = loginForm.querySelector('button[type="submit"]');
+  button.textContent = '🔄 Logging in...';
+  button.disabled = true;
+  
+  const success = await login(email, password);
+  
+  button.textContent = 'Login to LocalShop';
+  button.disabled = false;
+  
+  if (success) {
+    loginForm.reset();
+  }
+});
+
+signupForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = new FormData(signupForm);
+  const name = form.get('name');
+  const email = form.get('email');
+  const phone = form.get('phone');
+  const password = form.get('password');
+  
+  const button = signupForm.querySelector('button[type="submit"]');
+  button.textContent = '🔄 Creating account...';
+  button.disabled = true;
+  
+  const success = await signup(name, email, phone, password);
+  
+  button.textContent = 'Create Account';
+  button.disabled = false;
+  
+  if (success) {
+    signupForm.reset();
+  }
+});
+
+verificationForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const form = new FormData(verificationForm);
+  const code = form.get('code');
+  
+  if (!pendingEmail) {
+    showToast('No pending verification found', 'error');
+    return;
+  }
+  
+  const button = verificationForm.querySelector('button[type="submit"]');
+  button.textContent = '🔄 Verifying...';
+  button.disabled = true;
+  
+  const success = await verify(pendingEmail, code);
+  
+  button.textContent = '✅ Verify & Join';
+  button.disabled = false;
+  
+  if (success) {
+    verificationForm.reset();
+    pendingEmail = null;
+  }
+});
+
+resendCode.addEventListener('click', async () => {
+  if (!pendingEmail) {
+    showToast('No pending verification found', 'error');
+    return;
+  }
+  
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/resend`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: pendingEmail })
+    });
+    
+    const data = await res.json();
+    
+    if (data.success) {
+      showToast('New verification code sent!', 'success');
+    } else {
+      showToast(data.message || 'Failed to resend code', 'error');
+    }
+  } catch (error) {
+    showToast('Network error. Please try again.', 'error');
+  }
+});
+
+// Update sell button click handler
+document.querySelector('button[onclick="sellDialog.showModal()"]')?.addEventListener('click', (e) => {
+  e.preventDefault(); // Prevent the onclick from firing
+  
+  if (!authToken || !currentUser) {
+    authDialog.showModal();
+    showToast('Please log in to sell items', 'info');
+  } else {
+    sellDialog.showModal();
+  }
+});
+
+// Initialize authentication UI
+updateAuthUI();
 
 // Initial load
 fetchListings(true);

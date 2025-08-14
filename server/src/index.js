@@ -5,6 +5,7 @@ import morgan from 'morgan';
 import compression from 'compression';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import mongoose from 'mongoose';
 import { connectDB } from './lib/db.js';
 import listingsRouter from './routes/listings.js';
 import { notFound, errorHandler } from './middleware/error.js';

@@ -34,12 +34,14 @@ export async function connectDB() {
   } catch (error) {
     console.error('❌ MongoDB connection error:', error.message);
     
-    // Retry in production
+    // In production, don't crash - just log and continue
     if (process.env.NODE_ENV === 'production') {
+      console.log('🔄 Will retry MongoDB connection in background...');
+      // Retry connection every 10 seconds in production
+      setTimeout(connectDB, 10000);
+    } else {
       console.log('🔄 Retrying connection in 5 seconds...');
       setTimeout(connectDB, 5000);
-    } else {
-      process.exit(1);
     }
   }
 }

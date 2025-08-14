@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Listing from '../models/Listing.js';
 import User from '../models/User.js';
 
@@ -74,6 +75,16 @@ export async function createListing(req, res, next) {
 
 export async function getListings(req, res, next) {
   try {
+    // Check if database is connected
+    if (mongoose.connection.readyState !== 1) {
+      return res.json({
+        items: [],
+        nextCursor: null,
+        analytics: { totalItems: 0, averagePrice: 0, withImages: 0, verified: 0 },
+        filters: {},
+        message: 'Database connecting... Please try again in a moment.'
+      });
+    }
     const { 
       q, 
       category, 

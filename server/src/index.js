@@ -47,13 +47,18 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check
-app.get('/health', (_req, res) => res.json({ 
-  ok: true, 
-  timestamp: new Date().toISOString(),
-  environment: process.env.NODE_ENV || 'development',
-  version: '1.0.0'
-}));
+// Health check - always responds OK for Railway deployment
+app.get('/health', (_req, res) => {
+  const health = {
+    ok: true, 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    version: '1.0.0',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'connecting'
+  };
+  
+  res.status(200).json(health);
+});
 
 // API Routes
 app.use('/api/listings', listingsRouter);
@@ -76,13 +81,13 @@ if (isProduction) {
 app.use(notFound);
 app.use(errorHandler);
 
-// Start
-(async () => {
-  try {
-    await connectDB();
-    app.listen(PORT, () => console.log(`API listening on :${PORT}`));
-  } catch (err) {
-    console.error('Failed to start server', err);
-    process.exit(1);
-  }
-})();
+// Start server first, connect to DB in background
+app.listen(PORT, () => {
+  console.log(`🚀 API listening on port ${PORT}`);
+  console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+  
+  // Connect to database in background (non-blocking)
+  connectDB().catch(error => {
+    console.error('⚠️  Initial database connection failed, will retry in background:', error.message);
+  });
+});

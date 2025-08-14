@@ -10,6 +10,7 @@ import { connectDB } from './lib/db.js';
 import listingsRouter from './routes/listings.js';
 import authRouter from './routes/simpleAuth.js';
 import { notFound, errorHandler } from './middleware/error.js';
+import Listing from './models/Listing.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -124,8 +125,6 @@ app.use('/api/listings', listingsRouter);
 // Temporary cleanup endpoint for production
 app.post('/api/cleanup', async (req, res) => {
   try {
-    const { Listing } = await import('./models/Listing.js');
-    
     // Remove test items
     const testPatterns = [
       /test/i,
@@ -157,7 +156,7 @@ app.post('/api/cleanup', async (req, res) => {
     });
   } catch (error) {
     console.error('Cleanup error:', error);
-    res.status(500).json({ success: false, message: 'Cleanup failed' });
+    res.status(500).json({ success: false, message: 'Cleanup failed', error: error.message });
   }
 });
 

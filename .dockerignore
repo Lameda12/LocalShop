@@ -1,0 +1,52 @@
+# Dependencies (will be installed fresh)
+node_modules
+server/node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Development files
+.git
+.gitignore
+README.md
+.env.local
+.env.development
+.env.test
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS files  
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+/tmp
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage
+.nyc_output
+
+# Build artifacts (if any)
+dist
+build
+
+# Temporary files
+temp
+.temp
+.cache
+
+# Debug files
+debug-health.js

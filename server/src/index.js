@@ -118,8 +118,48 @@ app.get('/health', async (req, res) => {
 });
 
 // API Routes
-app.use('/api/auth', authRouter);
+app.use('/api/auth', authRouter); // Added auth routes
 app.use('/api/listings', listingsRouter);
+
+// Temporary cleanup endpoint for production
+app.post('/api/cleanup', async (req, res) => {
+  try {
+    const { Listing } = await import('./models/Listing.js');
+    
+    // Remove test items
+    const testPatterns = [
+      /test/i,
+      /sample/i,
+      /demo/i,
+      /example/i,
+      /working test/i
+    ];
+    
+    const testItems = await Listing.find({
+      $or: [
+        { title: { $regex: testPatterns.join('|') } },
+        { 'seller.name': { $regex: /test|demo|sample/i } }
+      ]
+    });
+    
+    if (testItems.length > 0) {
+      await Listing.deleteMany({
+        _id: { $in: testItems.map(item => item._id) }
+      });
+      
+      console.log(`🧹 Cleaned up ${testItems.length} test items`);
+    }
+    
+    res.json({
+      success: true,
+      message: `Database cleaned. Removed ${testItems.length} test items.`,
+      cleanedCount: testItems.length
+    });
+  } catch (error) {
+    console.error('Cleanup error:', error);
+    res.status(500).json({ success: false, message: 'Cleanup failed' });
+  }
+});
 
 // Serve static files in production
 if (isProduction) {

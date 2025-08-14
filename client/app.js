@@ -87,14 +87,21 @@ function cld(url, transform = 'f_auto,q_auto,c_fill,w_600,h_400') {
 async function fetchListings(reset=false) {
   if (fetching || done) return;
   fetching = true;
-  loadingEl.classList.remove('hidden');
-  if (reset && skeletonEl) skeletonEl.classList.remove('hidden');
-
+  
   if (reset) {
     listingsEl.innerHTML = '';
     cursor = null;
     done = false;
     endEl.classList.add('hidden');
+  }
+
+  // Show loading state
+  if (reset) {
+    const loadingTpl = document.getElementById('loadingTpl');
+    if (loadingTpl) {
+      listingsEl.innerHTML = '';
+      listingsEl.appendChild(loadingTpl.content.cloneNode(true));
+    }
   }
 
   const params = {
@@ -116,20 +123,83 @@ async function fetchListings(reset=false) {
     params.lng = userLocation.lng;
   }
 
-  const res = await fetch(`${API_BASE}/api/listings?${qs(params)}`);
-  const data = await res.json();
+  try {
+    const res = await fetch(`${API_BASE}/api/listings?${qs(params)}`);
+    
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    
+    const data = await res.json();
+    const items = data.items || data || [];
 
-  (data.items || []).forEach(renderCard);
+    if (reset) {
+      listingsEl.innerHTML = '';
+    }
 
-  cursor = data.nextCursor || null;
-  if (!cursor || (data.items || []).length === 0) {
-    done = true;
-    endEl.classList.remove('hidden');
+    if (items.length === 0 && reset) {
+      // Show empty state for production
+      const emptyStateTpl = document.getElementById('emptyStateTpl');
+      if (emptyStateTpl) {
+        listingsEl.appendChild(emptyStateTpl.content.cloneNode(true));
+      } else {
+        // Fallback empty state
+        listingsEl.innerHTML = `
+          <div class="text-center py-16 px-4">
+            <div class="text-8xl mb-6">🏪</div>
+            <h3 class="text-2xl font-bold text-gray-700 mb-4">Welcome to LocalShop!</h3>
+            <p class="text-gray-600 mb-8">Start by selling something you no longer need!</p>
+            <button onclick="sellDialog.showModal()" class="bg-blue-600 text-white px-8 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all">
+              🛍️ Sell Something
+            </button>
+          </div>
+        `;
+      }
+      return;
+    }
+
+    // Hide welcome section if there are items
+    const welcomeSection = document.getElementById('welcomeSection');
+    if (welcomeSection && items.length > 0) {
+      welcomeSection.style.display = 'none';
+    }
+
+    items.forEach(renderCard);
+
+    cursor = data.nextCursor || null;
+    if (!cursor || items.length === 0) {
+      done = true;
+      endEl.classList.remove('hidden');
+    }
+
+  } catch (error) {
+    console.error('Error fetching listings:', error);
+    
+    if (reset) {
+      // Show error state for production
+      const errorStateTpl = document.getElementById('errorStateTpl');
+      if (errorStateTpl) {
+        listingsEl.innerHTML = '';
+        listingsEl.appendChild(errorStateTpl.content.cloneNode(true));
+      } else {
+        // Fallback error state
+        listingsEl.innerHTML = `
+          <div class="text-center py-16 px-4">
+            <div class="text-6xl mb-4">⚠️</div>
+            <h3 class="text-xl font-semibold text-gray-700 mb-4">Something went wrong</h3>
+            <p class="text-gray-600 mb-6">We're having trouble loading items right now.</p>
+            <button onclick="location.reload()" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all">
+              Try Again
+            </button>
+          </div>
+        `;
+      }
+    }
+  } finally {
+    loadingEl.classList.add('hidden');
+    if (skeletonEl) skeletonEl.classList.add('hidden');
+    fetching = false;
   }
-
-  loadingEl.classList.add('hidden');
-  if (skeletonEl) skeletonEl.classList.add('hidden');
-  fetching = false;
 }
 
 // Enhanced card rendering with new features
@@ -180,15 +250,15 @@ function renderCard(item) {
   sellerInitial.textContent = sellerFirstName.charAt(0).toUpperCase();
   sellerName.textContent = sellerFirstName;
   
-  // Mock rating data (in real app, this would come from API)
-  const rating = Math.floor(Math.random() * 2) + 4; // 4-5 stars
-  const reviewCount = Math.floor(Math.random() * 50) + 5;
-  sellerRating.textContent = '⭐'.repeat(rating) + '☆'.repeat(5 - rating);
+  // Real rating data from API
+  const rating = item.seller?.rating || 5;
+  const reviewCount = item.seller?.reviewCount || 0;
+  sellerRating.textContent = '⭐'.repeat(Math.floor(rating)) + '☆'.repeat(5 - Math.floor(rating));
   ratingCount.textContent = `(${reviewCount})`;
   
-  // Verified badge (show randomly for demo)
+  // Verified badge (show only if seller is actually verified)
   const verifiedBadge = node.querySelector('.verified-badge');
-  if (Math.random() > 0.7) {
+  if (item.seller?.verified) {
     verifiedBadge.classList.remove('hidden');
   }
   
@@ -657,12 +727,21 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Update active listings count
   if (activeListings) {
-    const updateCount = () => {
-      const count = Math.floor(Math.random() * 1000) + 2000;
-      activeListings.textContent = `${(count / 1000).toFixed(1)}k+`;
+    const updateCount = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/api/listings`);
+        if (response.ok) {
+          const data = await response.json();
+          const count = data.length || 0;
+          activeListings.textContent = count > 1000 ? `${(count / 1000).toFixed(1)}k+` : `${count}+`;
+        }
+      } catch (error) {
+        // Fallback to showing "Active" without count
+        activeListings.textContent = 'Active';
+      }
     };
     updateCount();
-    setInterval(updateCount, 30000); // Update every 30 seconds
+    setInterval(updateCount, 60000); // Update every minute instead of every 30 seconds
   }
   
   perf.mark('app-ready');

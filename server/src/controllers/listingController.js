@@ -513,3 +513,40 @@ export async function getListingAnalytics(req, res, next) {
     next(err);
   }
 }
+
+// Clean up test data and prepare for production
+export async function cleanupTestData(req, res, next) {
+  try {
+    // Remove test items (items with test titles or created by test users)
+    const testPatterns = [
+      /test/i,
+      /sample/i,
+      /demo/i,
+      /example/i,
+      /working test/i
+    ];
+    
+    const testItems = await Listing.find({
+      $or: [
+        { title: { $regex: testPatterns.join('|') } },
+        { 'seller.name': { $regex: /test|demo|sample/i } }
+      ]
+    });
+    
+    if (testItems.length > 0) {
+      await Listing.deleteMany({
+        _id: { $in: testItems.map(item => item._id) }
+      });
+      
+      console.log(`🧹 Cleaned up ${testItems.length} test items`);
+    }
+    
+    res.json({
+      success: true,
+      message: `Database cleaned. Removed ${testItems.length} test items.`,
+      cleanedCount: testItems.length
+    });
+  } catch (err) {
+    next(err);
+  }
+}

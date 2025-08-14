@@ -1,16 +1,17 @@
 import { Router } from 'express';
 import { upload } from '../services/upload.js';
 import { requireAuth } from './simpleAuth.js';
-import { 
-  createListing, 
-  getListings, 
-  getListingById, 
+import {
+  createListing,
+  getListings,
+  getListingById,
   markSold,
   toggleFavorite,
   addInquiry,
   searchSuggestions,
   getHotDeals,
-  getListingAnalytics
+  getListingAnalytics,
+  cleanupTestData
 } from '../controllers/listingController.js';
 
 const router = Router();
@@ -41,5 +42,8 @@ router.post('/:id/inquiry', addInquiry);
 
 // PATCH /api/listings/:id/sold - Mark as sold
 router.patch('/:id/sold', markSold);
+
+// POST /api/listings/cleanup - Clean up test data (production only)
+router.post('/cleanup', cleanupTestData);
 
 export default router;

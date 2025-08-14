@@ -5,10 +5,10 @@
   "main": "server/src/index.js",
   "type": "module",
   "scripts": {
-    "start": "cd server && npm start",
+    "start": "./start.sh",
     "dev": "cd server && npm run dev",
-    "build": "echo 'No build step needed'",
-    "postinstall": "cd server && npm install"
+    "build": "cd server && npm install --production",
+    "postinstall": "cd server && npm install --production"
   },
   "keywords": [
     "marketplace",

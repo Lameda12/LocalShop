@@ -1,0 +1,11 @@
+[providers]
+nodejs = "18"
+
+[phases.install]
+cmds = ["npm ci", "cd server && npm ci"]
+
+[phases.build]
+cmds = ["echo 'Build completed successfully'"]
+
+[start]
+cmd = "node server/src/index.js"

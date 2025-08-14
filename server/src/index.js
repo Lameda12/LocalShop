@@ -125,18 +125,11 @@ app.use('/api/listings', listingsRouter);
 // Temporary cleanup endpoint for production
 app.post('/api/cleanup', async (req, res) => {
   try {
-    // Remove test items
-    const testPatterns = [
-      /test/i,
-      /sample/i,
-      /demo/i,
-      /example/i,
-      /working test/i
-    ];
-    
+    // Remove test items - improved patterns
     const testItems = await Listing.find({
       $or: [
-        { title: { $regex: testPatterns.join('|') } },
+        { title: { $regex: /test|sample|demo|example|working/i } },
+        { title: { $regex: /test item|sample item|demo item/i } },
         { 'seller.name': { $regex: /test|demo|sample/i } }
       ]
     });
@@ -146,13 +139,14 @@ app.post('/api/cleanup', async (req, res) => {
         _id: { $in: testItems.map(item => item._id) }
       });
       
-      console.log(`🧹 Cleaned up ${testItems.length} test items`);
+      console.log(`🧹 Cleaned up ${testItems.length} test items:`, testItems.map(item => item.title));
     }
     
     res.json({
       success: true,
       message: `Database cleaned. Removed ${testItems.length} test items.`,
-      cleanedCount: testItems.length
+      cleanedCount: testItems.length,
+      removedItems: testItems.map(item => item.title)
     });
   } catch (error) {
     console.error('Cleanup error:', error);

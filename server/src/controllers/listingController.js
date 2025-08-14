@@ -7,7 +7,10 @@ export async function createListing(req, res, next) {
     // Get authenticated user
     const user = await User.findById(req.userId);
     if (!user) {
-      return res.status(401).json({ error: 'User not found' });
+      return res.status(401).json({ 
+        success: false, 
+        message: 'User not found. Please login again.' 
+      });
     }
 
     const { 

@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url';
 import mongoose from 'mongoose';
 import { connectDB } from './lib/db.js';
 import listingsRouter from './routes/listings.js';
-import authRouter from './routes/auth.js';
+import authRouter from './routes/simpleAuth.js';
 import { notFound, errorHandler } from './middleware/error.js';
 
 const __filename = fileURLToPath(import.meta.url);

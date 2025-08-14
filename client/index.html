@@ -350,24 +350,12 @@
           </button>
         </form>
 
-        <!-- Verification Form -->
-        <form id="verificationForm" class="space-y-4 hidden">
-          <div class="text-center mb-4">
-            <div class="text-6xl mb-2">📧</div>
-            <p class="text-gray-600">We sent a verification code to your email!</p>
-            <p class="text-sm text-gray-500 mt-1">Check your inbox and enter the 6-digit code below:</p>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">🔢 Verification Code</label>
-            <input type="text" name="code" required maxlength="6" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-center text-2xl font-mono tracking-widest transition-all">
-          </div>
-          <button type="submit" class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all">
-            ✅ Verify & Join
-          </button>
-          <button type="button" id="resendCode" class="w-full text-blue-600 hover:text-blue-800 py-2 rounded-xl font-medium transition-colors">
-            📤 Resend Code
-          </button>
-        </form>
+        <!-- Success Message -->
+        <div id="authSuccess" class="text-center py-6 hidden">
+          <div class="text-6xl mb-4">🎉</div>
+          <p class="text-green-600 font-semibold mb-2">Welcome to LocalShop!</p>
+          <p class="text-gray-600 text-sm">You can now start buying and selling items!</p>
+        </div>
 
         <!-- Toggle between forms -->
         <div class="mt-6 text-center">

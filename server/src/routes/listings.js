@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { upload } from '../services/upload.js';
-import { requireAuth } from './auth.js';
+import { requireAuth } from './simpleAuth.js';
 import { 
   createListing, 
   getListings, 
@@ -30,7 +30,7 @@ router.get('/:id', getListingById);
 // GET /api/listings/:id/analytics - Get listing analytics
 router.get('/:id/analytics', getListingAnalytics);
 
-// POST /api/listings - Create new listing (multipart: images[]) - Requires Auth
+// POST /api/listings - Create new listing (multipart: images[]) - Simple Auth Required
 router.post('/', requireAuth, upload.array('images', 6), createListing);
 
 // POST /api/listings/:id/favorite - Toggle favorite status

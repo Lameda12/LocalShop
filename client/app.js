@@ -688,22 +688,42 @@ sellForm.addEventListener('submit', async (e) => {
   }
   
   const form = new FormData(sellForm);
-  const res = await fetch(`${API_BASE}/api/listings`, { 
-    method: 'POST', 
-    headers: {
-      'Authorization': `Bearer ${authToken}`
-    },
-    body: form 
-  });
   
-  if (res.ok) {
-    sellForm.reset();
-    sellDialog.close();
-    showToast('Item posted successfully!', 'success');
-    fetchListings(true);
-  } else {
-    const err = await res.json().catch(() => ({}));
-    showToast(err.message || 'Failed to post item', 'error');
+  // Show loading state
+  const submitBtn = sellForm.querySelector('button[type="submit"]');
+  const originalText = submitBtn.textContent;
+  submitBtn.textContent = '🔄 Posting Item...';
+  submitBtn.disabled = true;
+  
+  try {
+    const res = await fetch(`${API_BASE}/api/listings`, { 
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authToken}`
+      },
+      body: form 
+    });
+    
+    if (res.ok) {
+      sellForm.reset();
+      sellDialog.close();
+      showToast('✅ Item posted successfully!', 'success');
+      fetchListings(true);
+    } else {
+      const err = await res.json().catch(() => ({}));
+      if (err.message && err.message.includes('token')) {
+        clearAuth();
+        showToast('Session expired. Please login again.', 'warning');
+        authDialog.showModal();
+      } else {
+        showToast(err.message || 'Failed to post item', 'error');
+      }
+    }
+  } catch (error) {
+    showToast('Network error. Please try again.', 'error');
+  } finally {
+    submitBtn.textContent = originalText;
+    submitBtn.disabled = false;
   }
 });
 
@@ -771,9 +791,12 @@ async function signup(name, email, phone, password) {
     const data = await res.json();
     
     if (data.success) {
-      pendingEmail = email;
-      showVerificationForm();
-      showToast('Verification code sent! Check your email.', 'success');
+      saveAuth(data.token, data.user);
+      showSuccessMessage();
+      setTimeout(() => {
+        authDialog.close();
+        showToast(`Welcome to LocalShop, ${data.user.name}!`, 'success');
+      }, 2000);
       return true;
     } else {
       showToast(data.message || 'Signup failed', 'error');
@@ -785,63 +808,41 @@ async function signup(name, email, phone, password) {
   }
 }
 
-async function verify(email, code) {
-  try {
-    const res = await fetch(`${API_BASE}/api/auth/verify`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, code })
-    });
-    
-    const data = await res.json();
-    
-    if (data.success) {
-      saveAuth(data.token, data.user);
-      authDialog.close();
-      showToast(`Account created! Welcome, ${data.user.name}!`, 'success');
-      return true;
-    } else {
-      showToast(data.message || 'Verification failed', 'error');
-      return false;
-    }
-  } catch (error) {
-    showToast('Network error. Please try again.', 'error');
-    return false;
-  }
-}
+
 
 // Authentication UI Functions
 function showLoginForm() {
   document.getElementById('loginForm').classList.remove('hidden');
   document.getElementById('signupForm').classList.add('hidden');
-  document.getElementById('verificationForm').classList.add('hidden');
+  document.getElementById('authSuccess').classList.add('hidden');
   document.getElementById('authTitle').textContent = '🔐 Login';
   document.getElementById('toggleAuth').textContent = "Don't have an account? Sign up free!";
+  document.getElementById('toggleAuth').classList.remove('hidden');
 }
 
 function showSignupForm() {
   document.getElementById('loginForm').classList.add('hidden');
   document.getElementById('signupForm').classList.remove('hidden');
-  document.getElementById('verificationForm').classList.add('hidden');
+  document.getElementById('authSuccess').classList.add('hidden');
   document.getElementById('authTitle').textContent = '🚀 Join LocalShop';
   document.getElementById('toggleAuth').textContent = "Already have an account? Login";
+  document.getElementById('toggleAuth').classList.remove('hidden');
 }
 
-function showVerificationForm() {
+function showSuccessMessage() {
   document.getElementById('loginForm').classList.add('hidden');
   document.getElementById('signupForm').classList.add('hidden');
-  document.getElementById('verificationForm').classList.remove('hidden');
-  document.getElementById('authTitle').textContent = '📧 Verify Email';
+  document.getElementById('authSuccess').classList.remove('hidden');
+  document.getElementById('authTitle').textContent = '🎉 Success!';
+  document.getElementById('toggleAuth').classList.add('hidden');
 }
 
 // Authentication Event Listeners
 const authDialog = document.getElementById('authDialog');
 const loginForm = document.getElementById('loginForm');
 const signupForm = document.getElementById('signupForm');
-const verificationForm = document.getElementById('verificationForm');
 const closeAuth = document.getElementById('closeAuth');
 const toggleAuth = document.getElementById('toggleAuth');
-const resendCode = document.getElementById('resendCode');
 
 closeAuth.addEventListener('click', () => authDialog.close());
 
@@ -895,57 +896,9 @@ signupForm.addEventListener('submit', async (e) => {
   }
 });
 
-verificationForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const form = new FormData(verificationForm);
-  const code = form.get('code');
-  
-  if (!pendingEmail) {
-    showToast('No pending verification found', 'error');
-    return;
-  }
-  
-  const button = verificationForm.querySelector('button[type="submit"]');
-  button.textContent = '🔄 Verifying...';
-  button.disabled = true;
-  
-  const success = await verify(pendingEmail, code);
-  
-  button.textContent = '✅ Verify & Join';
-  button.disabled = false;
-  
-  if (success) {
-    verificationForm.reset();
-    pendingEmail = null;
-  }
-});
 
-resendCode.addEventListener('click', async () => {
-  if (!pendingEmail) {
-    showToast('No pending verification found', 'error');
-    return;
-  }
-  
-  try {
-    const res = await fetch(`${API_BASE}/api/auth/resend`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: pendingEmail })
-    });
-    
-    const data = await res.json();
-    
-    if (data.success) {
-      showToast('New verification code sent!', 'success');
-    } else {
-      showToast(data.message || 'Failed to resend code', 'error');
-    }
-  } catch (error) {
-    showToast('Network error. Please try again.', 'error');
-  }
-});
 
-// Update sell button click handler
+// Sell button click handler - requires authentication
 document.querySelector('button[onclick="sellDialog.showModal()"]')?.addEventListener('click', (e) => {
   e.preventDefault(); // Prevent the onclick from firing
   

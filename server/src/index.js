@@ -8,9 +8,8 @@ import { fileURLToPath } from 'url';
 import mongoose from 'mongoose';
 import { connectDB } from './lib/db.js';
 import listingsRouter from './routes/listings.js';
-import authRouter from './routes/simpleAuth.js';
+import authRouter from './routes/simpleAuth.js'; // Using simpleAuth now
 import { notFound, errorHandler } from './middleware/error.js';
-import Listing from './models/Listing.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -121,38 +120,6 @@ app.get('/health', async (req, res) => {
 // API Routes
 app.use('/api/auth', authRouter); // Added auth routes
 app.use('/api/listings', listingsRouter);
-
-// Temporary cleanup endpoint for production
-app.post('/api/cleanup', async (req, res) => {
-  try {
-    // Remove test items - improved patterns
-    const testItems = await Listing.find({
-      $or: [
-        { title: { $regex: /test|sample|demo|example|working/i } },
-        { title: { $regex: /test item|sample item|demo item/i } },
-        { 'seller.name': { $regex: /test|demo|sample/i } }
-      ]
-    });
-    
-    if (testItems.length > 0) {
-      await Listing.deleteMany({
-        _id: { $in: testItems.map(item => item._id) }
-      });
-      
-      console.log(`🧹 Cleaned up ${testItems.length} test items:`, testItems.map(item => item.title));
-    }
-    
-    res.json({
-      success: true,
-      message: `Database cleaned. Removed ${testItems.length} test items.`,
-      cleanedCount: testItems.length,
-      removedItems: testItems.map(item => item.title)
-    });
-  } catch (error) {
-    console.error('Cleanup error:', error);
-    res.status(500).json({ success: false, message: 'Cleanup failed', error: error.message });
-  }
-});
 
 // Serve static files in production
 if (isProduction) {

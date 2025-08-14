@@ -1,0 +1,31 @@
+{
+  "name": "localshop-marketplace",
+  "version": "1.0.0",
+  "description": "Better than Facebook Marketplace - Modern local marketplace with voice search, favorites, and PWA features",
+  "main": "server/src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "cd server && npm start",
+    "dev": "cd server && npm run dev",
+    "build": "echo 'No build step needed'",
+    "postinstall": "cd server && npm install"
+  },
+  "keywords": [
+    "marketplace",
+    "local",
+    "buy-sell",
+    "pwa",
+    "voice-search",
+    "favorites"
+  ],
+  "author": "Amadi",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR_USERNAME/localshop.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "homepage": "https://localshop.railway.app"
+}

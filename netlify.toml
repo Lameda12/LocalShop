@@ -1,0 +1,11 @@
+[build]
+  publish = "client"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://localshop-backend-production.up.railway.app/api/:splat"
+  status = 200
+  force = true
+
+[build.environment]
+  NODE_ENV = "production"

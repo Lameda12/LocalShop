@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Item - LocalShop</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#0f172a" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { 50: '#f0f9ff', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 900: '#0c4a6e' },
+            accent: { 500: '#f59e0b', 600: '#d97706' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+    .glass { backdrop-filter: blur(10px); background: rgba(255,255,255,0.95); }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen">
+  <!-- Enhanced Header -->
+  <header class="glass sticky top-0 z-50 border-b border-gray-200">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="./" class="flex items-center gap-2 text-primary-600 hover:text-primary-700 font-medium">
+        <span class="text-lg">←</span>
+        <span>Back to search</span>
+      </a>
+      <div class="flex items-center gap-2">
+        <button id="shareBtn" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors">
+          <span class="text-lg">📤</span>
+        </button>
+        <button id="favoriteBtn" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors">
+          <span class="text-lg">♡</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto p-4">
+    <!-- Image Gallery -->
+    <div class="mb-6">
+      <div id="gallery" class="aspect-video bg-gray-100 rounded-2xl overflow-hidden relative mb-4">
+        <div id="imageNav" class="absolute inset-x-4 top-1/2 transform -translate-y-1/2 flex justify-between z-10 hidden">
+          <button id="prevImg" class="w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 transition-colors">‹</button>
+          <button id="nextImg" class="w-10 h-10 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-black/70 transition-colors">›</button>
+        </div>
+        <div id="imageIndicators" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-10"></div>
+      </div>
+      <div id="thumbnails" class="flex gap-2 overflow-x-auto"></div>
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-8">
+      <!-- Main Content -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Title and Price -->
+        <div class="space-y-3">
+          <div class="flex items-start justify-between">
+            <h1 id="title" class="text-2xl lg:text-3xl font-bold text-gray-900"></h1>
+            <div id="dealBadge" class="hidden px-3 py-1 bg-gradient-to-r from-red-500 to-red-600 text-white text-sm font-bold rounded-full">
+              🔥 HOT DEAL
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-4">
+            <div id="priceContainer" class="flex items-center gap-2">
+              <span id="price" class="text-3xl font-bold text-gray-900"></span>
+              <span id="originalPrice" class="text-lg text-gray-500 line-through hidden"></span>
+              <span id="discount" class="px-2 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full hidden"></span>
+            </div>
+            <div id="negotiableTag" class="hidden px-3 py-1 bg-blue-100 text-blue-800 text-sm font-medium rounded-full">
+              💬 Negotiable
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-4 text-sm text-gray-600">
+            <span id="condition" class="flex items-center gap-1">
+              <span>📦</span>
+              <span class="condition-text"></span>
+            </span>
+            <span id="location" class="flex items-center gap-1">
+              <span>📍</span>
+              <span class="location-text"></span>
+            </span>
+            <span id="posted" class="flex items-center gap-1">
+              <span>🕒</span>
+              <span class="posted-text"></span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="bg-white rounded-2xl p-6 border border-gray-200">
+          <h2 class="text-lg font-semibold mb-3">📝 Description</h2>
+          <p id="description" class="text-gray-700 leading-relaxed"></p>
+          
+          <div id="features" class="mt-4 hidden">
+            <h3 class="font-medium text-gray-900 mb-2">✨ Features</h3>
+            <div id="featuresList" class="flex flex-wrap gap-2"></div>
+          </div>
+        </div>
+
+        <!-- Delivery Options -->
+        <div id="deliverySection" class="bg-white rounded-2xl p-6 border border-gray-200 hidden">
+          <h2 class="text-lg font-semibold mb-3">🚚 Delivery Options</h2>
+          <div id="deliveryOptions" class="space-y-2"></div>
+        </div>
+
+        <!-- Analytics -->
+        <div class="bg-white rounded-2xl p-6 border border-gray-200">
+          <h2 class="text-lg font-semibold mb-3">📊 Item Stats</h2>
+          <div class="grid grid-cols-3 gap-4 text-center">
+            <div>
+              <div id="viewCount" class="text-xl font-bold text-gray-900">-</div>
+              <div class="text-sm text-gray-600">Views</div>
+            </div>
+            <div>
+              <div id="favoriteCount" class="text-xl font-bold text-gray-900">-</div>
+              <div class="text-sm text-gray-600">Favorites</div>
+            </div>
+            <div>
+              <div id="inquiryCount" class="text-xl font-bold text-gray-900">-</div>
+              <div class="text-sm text-gray-600">Inquiries</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="space-y-6">
+        <!-- Seller Info -->
+        <div class="bg-white rounded-2xl p-6 border border-gray-200">
+          <h2 class="text-lg font-semibold mb-4">👤 Seller Information</h2>
+          
+          <div class="flex items-center gap-3 mb-4">
+            <div id="sellerAvatar" class="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+              ?
+            </div>
+            <div>
+              <div id="sellerName" class="font-semibold text-gray-900"></div>
+              <div class="flex items-center gap-2 text-sm">
+                <div id="sellerRating" class="flex text-yellow-400">⭐⭐⭐⭐⭐</div>
+                <span id="reviewCount" class="text-gray-600">(0)</span>
+                <div id="verifiedBadge" class="hidden bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full font-medium">
+                  ✓ Verified
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="space-y-2 text-sm text-gray-600 mb-4">
+            <div id="responseTime" class="flex items-center gap-2">
+              <span>⚡</span>
+              <span></span>
+            </div>
+            <div id="memberSince" class="flex items-center gap-2">
+              <span>📅</span>
+              <span>Member since 2024</span>
+            </div>
+          </div>
+
+          <!-- Contact Buttons -->
+          <div class="space-y-3">
+            <a id="callBtn" class="w-full px-4 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl font-medium text-center hover:shadow-lg transition-all flex items-center justify-center gap-2">
+              <span>📞</span>
+              <span>Call / Text</span>
+            </a>
+            <a id="msgBtn" class="w-full px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-medium text-center hover:bg-gray-50 transition-colors flex items-center justify-center gap-2">
+              <span>💬</span>
+              <span>Message</span>
+            </a>
+            <button id="inquiryBtn" class="w-full px-4 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
+              <span>✉️</span>
+              <span>Send Inquiry</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Safety Tips -->
+        <div class="bg-blue-50 rounded-2xl p-6 border border-blue-200">
+          <h3 class="font-semibold text-blue-900 mb-3">🛡️ Safety Tips</h3>
+          <ul class="space-y-2 text-sm text-blue-800">
+            <li>• Meet in a public place</li>
+            <li>• Inspect item before payment</li>
+            <li>• Use secure payment methods</li>
+            <li>• Trust your instincts</li>
+          </ul>
+        </div>
+
+        <!-- Report -->
+        <button class="w-full px-4 py-3 text-red-600 border border-red-200 rounded-xl font-medium hover:bg-red-50 transition-colors">
+          🚨 Report this listing
+        </button>
+      </div>
+    </div>
+
+    <!-- Inquiry Modal -->
+    <div id="inquiryModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+      <div class="bg-white rounded-2xl p-6 m-4 max-w-md w-full">
+        <h3 class="text-xl font-bold mb-4">✉️ Send Inquiry</h3>
+        <form id="inquiryForm" class="space-y-4">
+          <textarea 
+            id="inquiryMessage" 
+            placeholder="Hi, I'm interested in this item. Is it still available?"
+            class="w-full px-4 py-3 bg-gray-50 rounded-xl resize-none border-0 focus:ring-2 focus:ring-primary-500"
+            rows="4"
+          ></textarea>
+          <div class="flex gap-3">
+            <button type="button" id="cancelInquiry" class="flex-1 px-4 py-3 border border-gray-300 rounded-xl font-medium hover:bg-gray-50">
+              Cancel
+            </button>
+            <button type="submit" class="flex-1 px-4 py-3 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700">
+              Send
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    const API_BASE = (() => {
+      if (window.API_BASE) return window.API_BASE;
+      const isLocal = ['localhost', '127.0.0.1'].includes(location.hostname);
+      return isLocal ? 'http://localhost:4000' : window.location.origin;
+    })();
+    
+    const params = new URLSearchParams(location.search);
+    const id = params.get('id');
+
+    let currentImageIndex = 0;
+    let item = null;
+
+    // Fetch item data
+    try {
+    const res = await fetch(`${API_BASE}/api/listings/${id}`);
+      item = await res.json();
+      
+      if (!item) {
+        throw new Error('Item not found');
+      }
+      
+      renderItem(item);
+      loadAnalytics();
+    } catch (error) {
+      console.error('Error loading item:', error);
+      showError('Failed to load item details');
+    }
+
+    function showError(message) {
+      document.body.innerHTML = `
+        <div class="min-h-screen flex items-center justify-center">
+          <div class="text-center">
+            <div class="text-6xl mb-4">😔</div>
+            <h1 class="text-2xl font-bold mb-2">Oops!</h1>
+            <p class="text-gray-600 mb-4">${message}</p>
+            <a href="./" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700">
+              Back to Search
+            </a>
+          </div>
+        </div>
+      `;
+    }
+
+    function cld(url, transform = 'f_auto,q_auto,c_fit,w_1200,h_800') {
+      if (!url) return url;
+      const marker = '/upload/';
+      const idx = url.indexOf(marker);
+      if (idx === -1) return url;
+      return url.slice(0, idx + marker.length) + transform + '/' + url.slice(idx + marker.length);
+    }
+
+    function timeAgo(dateStr) {
+      const s = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+      if (s < 60) return `${s}s ago`;
+      const m = Math.floor(s / 60); if (m < 60) return `${m}m ago`;
+      const h = Math.floor(m / 60); if (h < 24) return `${h}h ago`;
+      const d = Math.floor(h / 24); if (d < 7) return `${d}d ago`;
+      const w = Math.floor(d / 7); return `${w}w ago`;
+    }
+
+    function php(n) { return `₱${Number(n).toLocaleString('en-PH')}`; }
+
+    function renderItem(item) {
+      // Title and basic info
+    document.getElementById('title').textContent = item.title;
+    document.getElementById('price').textContent = php(item.price);
+      
+      // Deal detection
+      if (item.originalPrice && item.price < item.originalPrice) {
+        document.getElementById('originalPrice').textContent = php(item.originalPrice);
+        document.getElementById('originalPrice').classList.remove('hidden');
+        
+        const discount = Math.round((1 - item.price / item.originalPrice) * 100);
+        document.getElementById('discount').textContent = `${discount}% OFF`;
+        document.getElementById('discount').classList.remove('hidden');
+        document.getElementById('dealBadge').classList.remove('hidden');
+      }
+      
+      // Negotiable tag
+      if (item.negotiable) {
+        document.getElementById('negotiableTag').classList.remove('hidden');
+      }
+      
+      // Condition, location, and posting time
+      document.querySelector('.condition-text').textContent = item.condition || 'Good';
+      document.querySelector('.location-text').textContent = 
+        [item.location?.city, item.location?.region].filter(Boolean).join(', ') || 'Location not specified';
+      document.querySelector('.posted-text').textContent = timeAgo(item.createdAt);
+      
+      // Description
+      document.getElementById('description').textContent = item.description || 'No description provided.';
+      
+      // Features
+      if (item.features && item.features.length > 0) {
+        const featuresSection = document.getElementById('features');
+        const featuresList = document.getElementById('featuresList');
+        featuresSection.classList.remove('hidden');
+        featuresList.innerHTML = item.features.map(feature => 
+          `<span class="px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">${feature}</span>`
+        ).join('');
+      }
+      
+      // Gallery
+      renderGallery(item.images || []);
+      
+      // Seller info
+      renderSellerInfo(item.seller);
+      
+      // Contact buttons
+      setupContactButtons(item.seller);
+      
+      // Favorite button
+      setupFavoriteButton();
+      
+      // Update page title
+      document.title = `${item.title} - LocalShop`;
+    }
+
+    function renderGallery(images) {
+      const gallery = document.getElementById('gallery');
+      const thumbnails = document.getElementById('thumbnails');
+      const imageNav = document.getElementById('imageNav');
+      const indicators = document.getElementById('imageIndicators');
+      
+      if (!images.length) {
+        gallery.innerHTML = '<div class="w-full h-full grid place-items-center text-gray-400"><div class="text-center"><div class="text-4xl mb-2">📷</div><div>No images available</div></div></div>';
+        return;
+      }
+      
+      // Main gallery
+      gallery.innerHTML = images.map((img, index) => 
+        `<img src="${cld(img.url)}" class="w-full h-full object-cover ${index === 0 ? '' : 'hidden'}" data-index="${index}" />`
+      ).join('');
+      
+      // Thumbnails
+      if (images.length > 1) {
+        thumbnails.innerHTML = images.map((img, index) => 
+          `<button class="w-16 h-16 rounded-lg overflow-hidden border-2 ${index === 0 ? 'border-primary-500' : 'border-gray-200'}" data-index="${index}">
+            <img src="${cld(img.url, 'f_auto,q_auto,c_fill,w_64,h_64')}" class="w-full h-full object-cover" />
+          </button>`
+        ).join('');
+        
+        // Navigation
+        imageNav.classList.remove('hidden');
+        
+        // Indicators
+        indicators.innerHTML = images.map((_, index) => 
+          `<div class="w-2 h-2 rounded-full ${index === 0 ? 'bg-white' : 'bg-white/50'}" data-index="${index}"></div>`
+        ).join('');
+        
+        // Setup navigation
+        setupGalleryNavigation(images.length);
+      }
+    }
+
+    function setupGalleryNavigation(imageCount) {
+      const gallery = document.getElementById('gallery');
+      const thumbnails = document.getElementById('thumbnails');
+      const indicators = document.getElementById('imageIndicators');
+      const prevBtn = document.getElementById('prevImg');
+      const nextBtn = document.getElementById('nextImg');
+      
+      function showImage(index) {
+        currentImageIndex = index;
+        
+        // Update main image
+        gallery.querySelectorAll('img').forEach((img, i) => {
+          img.classList.toggle('hidden', i !== index);
+        });
+        
+        // Update thumbnails
+        thumbnails.querySelectorAll('button').forEach((btn, i) => {
+          btn.classList.toggle('border-primary-500', i === index);
+          btn.classList.toggle('border-gray-200', i !== index);
+        });
+        
+        // Update indicators
+        indicators.querySelectorAll('div').forEach((indicator, i) => {
+          indicator.classList.toggle('bg-white', i === index);
+          indicator.classList.toggle('bg-white/50', i !== index);
+        });
+      }
+      
+      // Thumbnail clicks
+      thumbnails.addEventListener('click', (e) => {
+        const button = e.target.closest('button');
+        if (button) {
+          const index = parseInt(button.dataset.index);
+          showImage(index);
+        }
+      });
+      
+      // Navigation buttons
+      prevBtn.addEventListener('click', () => {
+        const newIndex = currentImageIndex > 0 ? currentImageIndex - 1 : imageCount - 1;
+        showImage(newIndex);
+      });
+      
+      nextBtn.addEventListener('click', () => {
+        const newIndex = currentImageIndex < imageCount - 1 ? currentImageIndex + 1 : 0;
+        showImage(newIndex);
+      });
+      
+      // Keyboard navigation
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') prevBtn.click();
+        if (e.key === 'ArrowRight') nextBtn.click();
+      });
+    }
+
+    function renderSellerInfo(seller) {
+      if (!seller) return;
+      
+      // Avatar
+      const avatar = document.getElementById('sellerAvatar');
+      const initial = seller.name?.charAt(0).toUpperCase() || '?';
+      avatar.textContent = initial;
+      
+      // Name
+      document.getElementById('sellerName').textContent = seller.name || 'Anonymous';
+      
+      // Rating
+      const rating = seller.rating || 5;
+      const reviewCount = seller.reviewCount || 0;
+      document.getElementById('sellerRating').textContent = '⭐'.repeat(rating) + '☆'.repeat(5 - rating);
+      document.getElementById('reviewCount').textContent = `(${reviewCount})`;
+      
+      // Verified badge
+      if (seller.verified) {
+        document.getElementById('verifiedBadge').classList.remove('hidden');
+      }
+      
+      // Response time
+      document.getElementById('responseTime').querySelector('span:last-child').textContent = 
+        seller.responseTime || 'Usually responds within a day';
+    }
+
+    function setupContactButtons(seller) {
+    const callBtn = document.getElementById('callBtn');
+      const msgBtn = document.getElementById('msgBtn');
+      
+      callBtn.href = `tel:${seller?.phone || ''}`;
+      
+      if (seller?.messagingLink) {
+        msgBtn.href = seller.messagingLink;
+      } else {
+        msgBtn.classList.add('opacity-50', 'pointer-events-none');
+      }
+    }
+
+    function setupFavoriteButton() {
+      const favoriteBtn = document.getElementById('favoriteBtn');
+      const favorites = JSON.parse(localStorage.getItem('localshop_favorites') || '[]');
+      const isFavorited = favorites.includes(id);
+      
+      if (isFavorited) {
+        favoriteBtn.querySelector('span').textContent = '♥';
+        favoriteBtn.classList.add('text-red-500');
+      }
+      
+      favoriteBtn.addEventListener('click', async () => {
+        try {
+          const action = isFavorited ? 'remove' : 'add';
+          const response = await fetch(`${API_BASE}/api/listings/${id}/favorite`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action })
+          });
+          
+          if (response.ok) {
+            const heart = favoriteBtn.querySelector('span');
+            if (action === 'add') {
+              heart.textContent = '♥';
+              favoriteBtn.classList.add('text-red-500');
+              favorites.push(id);
+              showToast('Added to favorites!', 'success');
+            } else {
+              heart.textContent = '♡';
+              favoriteBtn.classList.remove('text-red-500');
+              const index = favorites.indexOf(id);
+              if (index > -1) favorites.splice(index, 1);
+              showToast('Removed from favorites', 'info');
+            }
+            localStorage.setItem('localshop_favorites', JSON.stringify(favorites));
+          }
+        } catch (error) {
+          console.error('Error toggling favorite:', error);
+          showToast('Failed to update favorites', 'error');
+        }
+      });
+    }
+
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-lg text-white font-medium transition-all transform translate-x-full ${
+        type === 'success' ? 'bg-green-500' : 
+        type === 'error' ? 'bg-red-500' : 
+        'bg-blue-500'
+      }`;
+      toast.textContent = message;
+      
+      document.body.appendChild(toast);
+      setTimeout(() => toast.classList.remove('translate-x-full'), 100);
+      setTimeout(() => {
+        toast.classList.add('translate-x-full');
+        setTimeout(() => document.body.removeChild(toast), 300);
+      }, 3000);
+    }
+
+    async function loadAnalytics() {
+      try {
+        const response = await fetch(`${API_BASE}/api/listings/${id}/analytics`);
+        if (response.ok) {
+          const data = await response.json();
+          document.getElementById('viewCount').textContent = data.analytics.views || 0;
+          document.getElementById('favoriteCount').textContent = data.analytics.favorites || 0;
+          document.getElementById('inquiryCount').textContent = data.analytics.inquiries || 0;
+        }
+      } catch (error) {
+        console.error('Error loading analytics:', error);
+      }
+    }
+
+    // Inquiry modal
+    const inquiryBtn = document.getElementById('inquiryBtn');
+    const inquiryModal = document.getElementById('inquiryModal');
+    const inquiryForm = document.getElementById('inquiryForm');
+    const cancelInquiry = document.getElementById('cancelInquiry');
+
+    inquiryBtn.addEventListener('click', () => {
+      inquiryModal.classList.remove('hidden');
+    });
+
+    cancelInquiry.addEventListener('click', () => {
+      inquiryModal.classList.add('hidden');
+    });
+
+    inquiryModal.addEventListener('click', (e) => {
+      if (e.target === inquiryModal) {
+        inquiryModal.classList.add('hidden');
+      }
+    });
+
+    inquiryForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const message = document.getElementById('inquiryMessage').value.trim();
+      if (!message) return;
+      
+      try {
+        const response = await fetch(`${API_BASE}/api/listings/${id}/inquiry`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            message,
+            contactMethod: 'inquiry'
+          })
+        });
+        
+        if (response.ok) {
+          inquiryModal.classList.add('hidden');
+          showToast('Inquiry sent successfully!', 'success');
+          document.getElementById('inquiryMessage').value = '';
+          
+          // Update inquiry count
+          const currentCount = parseInt(document.getElementById('inquiryCount').textContent) || 0;
+          document.getElementById('inquiryCount').textContent = currentCount + 1;
+        } else {
+          throw new Error('Failed to send inquiry');
+        }
+      } catch (error) {
+        console.error('Error sending inquiry:', error);
+        showToast('Failed to send inquiry', 'error');
+      }
+    });
+
+    // Share functionality
+    document.getElementById('shareBtn').addEventListener('click', async () => {
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: item.title,
+            text: `Check out this item: ${item.title} for ${php(item.price)}`,
+            url: window.location.href
+          });
+        } catch (error) {
+          console.log('Error sharing:', error);
+        }
+      } else {
+        // Fallback: copy to clipboard
+        try {
+          await navigator.clipboard.writeText(window.location.href);
+          showToast('Link copied to clipboard!', 'success');
+        } catch (error) {
+          showToast('Failed to copy link', 'error');
+        }
+      }
+    });
+  </script>
+</body>
+</html>
